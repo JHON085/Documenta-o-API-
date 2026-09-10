@@ -1,412 +1,255 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Documentação do Serviço de Pagamento (Serviço 04) do projeto PZaaS." />
-  <meta name="theme-color" content="#0b1020" />
-  <title>PZaaS · Serviço de Pagamento (04)</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Documentação do Serviço 04 - Pagamento do projeto PZaaS.">
+  <title>PZaaS | Pagamento - Serviço 04</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-mark">PZ</div>
-        <div>
-          <strong>PZaaS</strong>
-          <span>Pagamento · Serviço 04</span>
-        </div>
+  <header class="topo">
+    <div class="wrap topo-grid">
+      <div>
+        <p class="tag">PZaaS · Serviço 04</p>
+        <h1>Serviço de Pagamento</h1>
+        <p class="sub">Documentação do workflow feito no n8n para processamento de pagamentos, Redis, Logger, Orquestrador, Health Check e teste de falha com Chaos Monkey.</p>
       </div>
-
-      <button class="menu-close" id="menuClose" aria-label="Fechar menu">×</button>
-
-      <nav class="nav" aria-label="Navegação da documentação">
-        <a href="#visao-geral">1. Visão geral</a>
-        <a href="#endpoints">2. Endpoints</a>
-        <a href="#entrada">3. Entrada do pagamento</a>
-        <a href="#processamento">4. Processamento</a>
-        <a href="#recusado">5. Pagamento recusado</a>
-        <a href="#aprovado">6. Pagamento aprovado</a>
-        <a href="#redis">7. Uso do Redis</a>
-        <a href="#logger">8. Logger</a>
-        <a href="#orquestrador">9. Orquestrador</a>
-        <a href="#health">10. Health Check</a>
-        <a href="#chaos">11. Chaos Monkey</a>
-        <a href="#fluxo">12. Fluxo geral</a>
-        <a href="#codigos">13. Códigos de resposta</a>
-        <a href="#integracao">14. Integração</a>
-        <a href="#estado">15. Estado atual</a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <span class="status-dot"></span>
-        <span>Documentação v1</span>
+      <div class="alunos">
+        <span>Dupla</span>
+        <strong>RA 243199</strong>
+        <strong>RA 240080</strong>
       </div>
-    </aside>
+    </div>
+  </header>
 
-    <main class="main">
-      <header class="topbar">
-        <button class="menu-open" id="menuOpen" aria-label="Abrir menu">☰</button>
-        <div class="breadcrumb">PZaaS / Serviço 04 / Pagamento</div>
-        <button class="print-btn" onclick="window.print()">Imprimir / PDF</button>
-      </header>
+  <nav class="menu">
+    <div class="wrap menu-links">
+      <a href="#visao">Visão geral</a>
+      <a href="#endpoints">Endpoints</a>
+      <a href="#pagamento">Pagamento</a>
+      <a href="#redis">Redis</a>
+      <a href="#logger">Logger</a>
+      <a href="#orquestrador">Orquestrador</a>
+      <a href="#health">Health</a>
+      <a href="#chaos">Chaos Monkey</a>
+      <a href="#fluxo">Fluxo geral</a>
+    </div>
+  </nav>
 
-      <div class="content">
-        <section class="hero" id="topo">
-          <div class="eyebrow">DOCUMENTAÇÃO TÉCNICA · V1</div>
-          <h1>Serviço de Pagamento</h1>
-          <p class="hero-text">Responsável por validar requisições, verificar saldo, garantir idempotência, persistir o estado do pagamento e integrar o resultado aos demais serviços do PZaaS.</p>
-          <div class="hero-badges">
-            <span class="badge">HTTP / JSON</span>
-            <span class="badge">n8n</span>
-            <span class="badge">Redis</span>
-            <span class="badge badge-ok">Serviço 04</span>
-          </div>
-        </section>
+  <main class="wrap conteudo">
+    <section id="visao" class="bloco">
+      <h2>1. Visão geral</h2>
+      <p>Nosso serviço é o <strong>Pagamento - Serviço 04</strong>. Ele recebe os dados de um pedido, valida os headers, verifica no Redis se o pedido já foi processado e compara o saldo do cliente com o valor da compra.</p>
+      <p>Quando o saldo é suficiente, o pedido segue como aprovado. Quando não é suficiente, ele é recusado. Também usamos Redis para guardar o estado do pagamento, Logger para registrar as operações, Orquestrador para continuar o fluxo e um Health Check para verificar a disponibilidade do Redis.</p>
+      <div class="cards">
+        <div class="card"><span>Serviço</span><strong>Pagamento-243199-240080</strong></div>
+        <div class="card"><span>Versão</span><strong>v1</strong></div>
+        <div class="card"><span>Ferramenta</span><strong>n8n</strong></div>
+        <div class="card"><span>Armazenamento</span><strong>Redis</strong></div>
+        <div class="card"><span>Protocolo</span><strong>HTTP / JSON</strong></div>
+        <div class="card"><span>Turma</span><strong>turmaa21</strong></div>
+      </div>
+    </section>
 
-        <div class="callout warning">
-          <strong>Nota de segurança:</strong> a chave <code>x-api-key</code> exibida nesta documentação é a chave utilizada no ambiente acadêmico de testes. Não utilize credenciais reais em documentação pública.
-        </div>
+    <section id="endpoints" class="bloco">
+      <h2>2. Endpoints</h2>
+      <div class="endpoint"><span class="post">POST</span><code>/v1/turmaa21_Pagamento/fluxo</code><p>Recebe e processa o pagamento.</p></div>
+      <div class="endpoint"><span class="get">GET</span><code>/v1/turmaa21/health</code><p>Verifica o serviço e a conexão com o Redis.</p></div>
+      <div class="endpoint"><span class="post">POST</span><code>/v1/turmaa21_pagamento/chaos_monkey</code><p>Ativa ou desativa a falha controlada do serviço de Pagamento.</p></div>
+    </section>
 
-        <section id="visao-geral" class="doc-section">
-          <div class="section-kicker">01</div>
-          <h2>Visão geral</h2>
-          <p>O Serviço 04 é responsável pelo pagamento no PZaaS. Ele recebe os dados do pedido, valida a requisição, verifica se o saldo informado é suficiente e registra o resultado como aprovado ou recusado.</p>
-          <p>O fluxo principal foi desenvolvido no n8n usando Webhook, IF, Edit Fields, Redis, HTTP Request e Respond to Webhook. O Health Check fica junto do serviço de Pagamento. A integração usada nos testes com o Chaos Monkey foi deixada em um workflow separado, para não misturar o fluxo normal com a simulação de falhas.</p>
-
-          <div class="info-grid">
-            <div class="info-card"><span>Nome do serviço</span><strong>Pagamento-243199-240080</strong></div>
-            <div class="info-card"><span>Versão</span><strong>v1</strong></div>
-            <div class="info-card"><span>Protocolo</span><strong>HTTP / JSON</strong></div>
-            <div class="info-card"><span>Armazenamento</span><strong>Redis</strong></div>
-            <div class="info-card"><span>Prefixo da turma</span><strong>turmaa21</strong></div>
-          </div>
-        </section>
-
-        <section id="endpoints" class="doc-section">
-          <div class="section-kicker">02</div>
-          <h2>Endpoints</h2>
-          <div class="endpoint-list">
-            <article class="endpoint-card">
-              <div class="endpoint-head"><span class="method post">POST</span><code>/v1/turmaa21_Pagamento/fluxo</code></div>
-              <p>Recebe e processa o pagamento.</p>
-            </article>
-            <article class="endpoint-card">
-              <div class="endpoint-head"><span class="method get">GET</span><code>/v1/turmaa21/health</code></div>
-              <p>Verifica o serviço e a conexão com o Redis.</p>
-            </article>
-            <article class="endpoint-card">
-              <div class="endpoint-head"><span class="method post">POST</span><code>/v1/turmaa21_pagamento/chaos_monkey</code></div>
-              <p>Endpoint separado usado para receber testes de falha da dupla do Chaos Monkey.</p>
-            </article>
-          </div>
-        </section>
-
-        <section id="entrada" class="doc-section">
-          <div class="section-kicker">03</div>
-          <h2>Entrada do pagamento</h2>
-          <p>A rota principal recebe uma requisição <strong>POST</strong> em <code>/v1/turmaa21_Pagamento/fluxo</code>. O body contém o identificador do pedido, o cliente, o valor da compra e o saldo disponível informado na requisição.</p>
-          <h3>Body de exemplo</h3>
-          <pre><code class="language-json">{
+    <section id="pagamento" class="bloco">
+      <h2>3. Pagamento</h2>
+      <h3>Entrada</h3>
+      <p>O fluxo principal recebe uma requisição POST com os dados abaixo:</p>
+      <pre><code>{
   "pedido_id": "8030",
   "cliente": "Joao",
   "valor": 79.90,
   "saldo_cliente": 100.00
 }</code></pre>
-          <h3>Headers utilizados</h3>
-          <pre><code>Content-Type: application/json
+
+      <h3>Headers usados</h3>
+      <pre><code>Content-Type: application/json
 x-api-key: turma2026
 x-pedido-id: 8030</code></pre>
-        </section>
 
-        <section id="processamento" class="doc-section">
-          <div class="section-kicker">04</div>
-          <h2>Processamento do pagamento</h2>
-          <p>O processamento segue esta ordem: validação da API Key, validação do <code>x-pedido-id</code>, consulta no Redis para evitar cobrança duplicada e verificação do saldo.</p>
+      <h3>Validações</h3>
+      <p>Primeiro o serviço consulta o estado do Chaos Monkey. Se o serviço não estiver em falha, ele continua para a validação da API Key e depois verifica se o <code>x-pedido-id</code> foi enviado.</p>
+      <p>Depois disso, consulta a chave <code>pedido:&lt;pedido_id&gt;</code> no Redis. Se o pedido já estiver salvo como <strong>APROVADO</strong>, ele não é processado de novo.</p>
 
-          <h3>4.1 Validação da API Key</h3>
-          <p>O header <code>x-api-key</code> é comparado com a chave configurada no workflow (<code>turma2026</code>). Se estiver ausente ou incorreto, o fluxo é encerrado com resposta <strong>401</strong>.</p>
-          <pre><code class="language-json">{
-  "erro": "API_KEY_INVALIDA",
-  "mensagem": "Acesso não autorizado."
-}</code></pre>
+      <h3>Saldo</h3>
+      <pre><code>saldo_cliente &gt;= valor</code></pre>
+      <p>Se a condição for verdadeira, o pagamento passa por <strong>PENDENTE</strong> e termina como <strong>APROVADO</strong>. Caso contrário, fica como <strong>RECUSADO</strong> por saldo insuficiente.</p>
 
-          <h3>4.2 Validação do x-pedido-id</h3>
-          <p>Depois da API Key, o serviço verifica se o header <code>x-pedido-id</code> foi enviado. Se estiver ausente, a requisição é rejeitada com código <strong>400</strong>.</p>
-          <pre><code class="language-json">{
-  "erro": "PAYLOAD_INVALIDO",
-  "mensagem": "Dados obrigatórios do pagamento estão ausentes ou inválidos."
-}</code></pre>
-
-          <h3>4.3 Verificação de pagamento já processado</h3>
-          <p>Com os headers validados, o fluxo consulta o Redis usando uma chave no formato:</p>
-          <pre><code>pedido:&lt;pedido_id&gt;</code></pre>
-          <p>Exemplo:</p>
-          <pre><code>pedido:8030</code></pre>
-          <p>Se o pedido já estiver salvo como <strong>APROVADO</strong>, ele não é processado novamente. Isso evita que uma repetição da mesma chamada gere uma nova cobrança.</p>
-          <pre><code class="language-json">{
+      <div class="duas-colunas">
+        <div>
+          <h3>Exemplo aprovado</h3>
+          <pre><code>{
   "pedido_id": "8030",
   "status": "APROVADO",
-  "motivo": "PAGAMENTO_JA_PROCESSADO"
+  "gateway_utilizado": "PRINCIPAL",
+  "motivo": null
 }</code></pre>
-
-          <h3>4.4 Verificação do saldo</h3>
-          <p>Se o pedido ainda não estiver aprovado, o fluxo compara o saldo informado com o valor da compra:</p>
-          <pre><code>saldo_cliente &gt;= valor</code></pre>
-          <p>Quando a condição é verdadeira, o fluxo segue para aprovação. Caso contrário, o pagamento é recusado por saldo insuficiente. No fluxo atual, <code>saldo_cliente</code> é usado para a decisão do pagamento; o saldo do cliente não é mantido como uma conta separada no Redis.</p>
-        </section>
-
-        <section id="recusado" class="doc-section">
-          <div class="section-kicker">05</div>
-          <h2>Pagamento recusado</h2>
-          <p>Quando o saldo é menor que o valor da compra, o pagamento recebe status <strong>RECUSADO</strong>. O motivo usado é <code>SALDO_INSUFICIENTE</code> e <code>gateway_utilizado</code> fica como <code>NENHUM</code>.</p>
-          <pre><code class="language-json">{
+        </div>
+        <div>
+          <h3>Exemplo recusado</h3>
+          <pre><code>{
   "pedido_id": "8031",
   "status": "RECUSADO",
   "motivo": "SALDO_INSUFICIENTE",
   "gateway_utilizado": "NENHUM"
 }</code></pre>
-          <p>O resultado é salvo no Redis e enviado ao Logger. Essa situação é tratada como recusa de negócio, não como erro técnico do serviço.</p>
-        </section>
+        </div>
+      </div>
+    </section>
 
-        <section id="aprovado" class="doc-section">
-          <div class="section-kicker">06</div>
-          <h2>Pagamento aprovado</h2>
-          <p>Quando o saldo é suficiente, o pedido passa pelo estado <strong>PENDENTE</strong> e depois é atualizado para <strong>APROVADO</strong>. No caminho principal, o campo <code>gateway_utilizado</code> recebe <code>PRINCIPAL</code>.</p>
-          <pre><code class="language-json">{
-  "pedido_id": "8030",
-  "status": "APROVADO",
-  "gateway_utilizado": "PRINCIPAL",
-  "motivo": null
-}</code></pre>
-          <div class="callout info"><strong>Por que <code>motivo</code> é null?</strong> Porque não existe motivo de recusa em um pagamento aprovado. O estado final também é persistido no Redis.</div>
-        </section>
+    <section id="redis" class="bloco">
+      <h2>4. Redis</h2>
+      <p>O Redis é usado em duas partes importantes do projeto: para salvar o estado do pagamento e para controlar a falha do Chaos Monkey.</p>
+      <h3>Estado do pedido</h3>
+      <pre><code>pedido:8030</code></pre>
+      <p>Nessa chave ficam informações como cliente, valor, status e gateway utilizado.</p>
+      <h3>Controle do Chaos</h3>
+      <pre><code>chaos:pagamento = 503</code></pre>
+      <p>Quando essa chave existe com valor <code>503</code>, o fluxo principal entende que o serviço está indisponível e retorna erro antes de processar o pagamento.</p>
+    </section>
 
-        <section id="redis" class="doc-section">
-          <div class="section-kicker">07</div>
-          <h2>Uso do Redis</h2>
-          <p>O Redis é usado para guardar o estado do pagamento e para a verificação de idempotência. A chave é baseada no <code>pedido_id</code> e o valor armazenado contém os dados principais da operação.</p>
-          <div class="two-cols">
-            <div>
-              <h3>Pagamento aprovado</h3>
-              <pre><code class="language-json">{
-  "cliente": "Joao",
-  "valor": 79.90,
-  "status": "APROVADO",
-  "gateway_utilizado": "PRINCIPAL"
-}</code></pre>
-            </div>
-            <div>
-              <h3>Pagamento recusado</h3>
-              <pre><code class="language-json">{
-  "cliente": "Joao",
-  "valor": 79.90,
-  "status": "RECUSADO",
-  "motivo": "SALDO_INSUFICIENTE",
-  "gateway_utilizado": "NENHUM"
-}</code></pre>
-            </div>
-          </div>
-        </section>
-
-        <section id="logger" class="doc-section">
-          <div class="section-kicker">08</div>
-          <h2>Logger</h2>
-          <p>O serviço envia logs dos pagamentos aprovados e recusados para o Logger. A chamada possui retry e foi configurada para não interromper o pagamento caso o Logger esteja indisponível.</p>
-          <pre><code class="language-json">{
+    <section id="logger" class="bloco">
+      <h2>5. Logger</h2>
+      <p>Depois do resultado do pagamento, enviamos um log para o serviço de Logger. Existem chamadas para pagamento aprovado e para saldo insuficiente.</p>
+      <p>A chamada de Logger está configurada com retry e para continuar o fluxo mesmo se houver erro nessa integração, evitando que uma falha no log impeça o pagamento de terminar.</p>
+      <pre><code>{
   "servico": "pagamento",
   "pedido_id": "8030",
   "status": "APROVADO",
   "gateway_utilizado": "PRINCIPAL",
   "motivo": null
 }</code></pre>
-        </section>
+    </section>
 
-        <section id="orquestrador" class="doc-section">
-          <div class="section-kicker">09</div>
-          <h2>Comunicação com o Orquestrador</h2>
-          <p>No protótipo atual, após a aprovação o workflow envia o resultado para o Orquestrador. As URLs usadas durante o desenvolvimento podem ser provisórias e devem ser substituídas pelos endpoints combinados entre as duplas na integração final.</p>
-          <pre><code class="language-json">{
-  "pedido_id": "8030",
-  "cliente": "Joao",
-  "valor": 79.90,
-  "status_pagamento": "APROVADO",
-  "gateway_utilizado": "PRINCIPAL",
-  "motivo": null,
-  "servico_origem": "pagamento"
-}</code></pre>
-          <h3>Headers enviados</h3>
-          <pre><code>Content-Type: application/json
-x-api-key: turma2026
-x-pedido-id: 8030</code></pre>
-          <div class="callout warning">Essa chamada de retorno deve permanecer somente se fizer parte do contrato final definido com a dupla do Orquestrador.</div>
-
-          <h3>9.1 Fallback do Orquestrador</h3>
-          <p>No fluxo implementado, a chamada tenta primeiro o Orquestrador A. Em caso de falha, a saída de erro segue para o Orquestrador B. Se os dois estiverem indisponíveis, a resposta final é <strong>503</strong>.</p>
-          <div class="flow-box">
-            <div class="flow-node success">Pagamento aprovado</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Logger</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Orquestrador A</div>
-            <div class="flow-split"><span>sucesso → resposta normal</span><span>falha → Orquestrador B</span></div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Orquestrador B</div>
-            <div class="flow-split"><span>sucesso → resposta normal</span><span>falha → 503</span></div>
-          </div>
-          <pre><code class="language-json">{
+    <section id="orquestrador" class="bloco">
+      <h2>6. Orquestrador e fallback</h2>
+      <p>Quando o pagamento é aprovado, o resultado é enviado para o Orquestrador A. Se essa chamada falhar, o workflow tenta o Orquestrador B.</p>
+      <div class="fluxo-curto">
+        <span>Pagamento aprovado</span><b>→</b><span>Logger</span><b>→</b><span>Orquestrador A</span><b>→</b><span>Fallback B</span>
+      </div>
+      <p>Se os dois estiverem indisponíveis, o serviço devolve um erro de indisponibilidade relacionado ao Orquestrador.</p>
+      <pre><code>{
   "erro": "SERVICO_INDISPONIVEL",
   "mensagem": "Orquestrador indisponivel apos fallback",
   "dependencia": "orquestrador",
-  "pedido_id": "8030",
   "servico": "pagamento"
 }</code></pre>
-        </section>
+    </section>
 
-        <section id="health" class="doc-section">
-          <div class="section-kicker">10</div>
-          <h2>Health Check</h2>
-          <p>O Health Check verifica se o serviço consegue acessar o Redis. O endpoint faz uma leitura da chave <code>health:pagamento</code>. Se a operação funcionar, retorna <strong>200</strong>; se houver erro de conexão com o Redis, retorna <strong>503</strong>.</p>
-          <div class="endpoint-inline"><span class="method get">GET</span><code>/v1/turmaa21/health</code></div>
-          <div class="two-cols">
-            <div>
-              <h3>Redis disponível · 200</h3>
-              <pre><code class="language-json">{
+    <section id="health" class="bloco">
+      <h2>7. Health Check</h2>
+      <p>O endpoint de Health Check faz uma consulta no Redis usando a chave <code>health:pagamento</code>.</p>
+      <p>Se não houver erro na operação, retorna o serviço como <strong>UP</strong> e o Redis como <strong>UP</strong>. Se houver erro, o retorno fica como <strong>DEGRADED</strong> e Redis <strong>DOWN</strong>.</p>
+      <div class="duas-colunas">
+        <pre><code>{
   "service": "pagamento",
   "status": "UP",
   "version": "v1",
-  "dependencies": {
-    "redis": "UP"
-  }
+  "dependencies": { "redis": "UP" }
 }</code></pre>
-            </div>
-            <div>
-              <h3>Redis indisponível · 503</h3>
-              <pre><code class="language-json">{
+        <pre><code>{
   "service": "pagamento",
   "status": "DEGRADED",
   "version": "v1",
-  "dependencies": {
-    "redis": "DOWN"
-  }
+  "dependencies": { "redis": "DOWN" }
 }</code></pre>
-            </div>
-          </div>
-        </section>
+      </div>
+    </section>
 
-        <section id="chaos" class="doc-section">
-          <div class="section-kicker">11</div>
-          <h2>Integração com o Chaos Monkey</h2>
-          <p>O Chaos Monkey é o Serviço 10 e pertence a outra dupla. Para permitir os testes de falha no Pagamento, foi criado um workflow separado com um Webhook que pode ser chamado por essa dupla. Esse workflow não implementa o Chaos Monkey; ele apenas recebe a solicitação de teste e devolve a falha configurada.</p>
-          <div class="endpoint-inline"><span class="method post">POST</span><code>/v1/turmaa21_pagamento/chaos_monkey</code></div>
-          <h3>Body recebido</h3>
-          <pre><code class="language-json">{
-  "pedido_id": "8030",
-  "tipo_falha": 500
-}</code></pre>
-          <div class="two-cols">
-            <div>
-              <h3>tipo_falha = 500</h3>
-              <pre><code class="language-json">{
-  "servico": "pagamento",
-  "pedido_id": "8030",
-  "erro": "FALHA_SIMULADA",
-  "tipo_falha": 500
-}</code></pre>
-            </div>
-            <div>
-              <h3>tipo_falha = 503</h3>
-              <pre><code class="language-json">{
-  "servico": "pagamento",
-  "pedido_id": "8030",
-  "erro": "FALHA_SIMULADA",
+    <section id="chaos" class="bloco destaque-chaos">
+      <h2>8. Chaos Monkey</h2>
+      <p>O Chaos Monkey agora interfere no fluxo principal de verdade. A ideia foi usar uma chave no Redis para indicar quando o serviço de Pagamento deve ficar indisponível.</p>
+
+      <h3>Ativar a falha</h3>
+      <p>Chamamos o endpoint de Chaos com:</p>
+      <pre><code>{
   "tipo_falha": 503
 }</code></pre>
-            </div>
-          </div>
-          <h3>Outros valores</h3>
-          <pre><code class="language-json">{
+      <p>O workflow verifica se <code>tipo_falha</code> é igual a 503. Se for, executa:</p>
+      <pre><code>SET chaos:pagamento = 503</code></pre>
+      <p>Depois disso, qualquer nova chamada no endpoint principal de Pagamento consulta essa chave logo no início. Se encontrar <code>503</code>, o pagamento não continua.</p>
+      <pre><code>{
+  "erro": "SERVICO_INDISPONIVEL",
   "servico": "pagamento",
-  "pedido_id": "8030",
-  "status": "OK",
-  "chaos": false
+  "motivo": "CHAOS_MONKEY",
+  "mensagem": "Servico de pagamento indisponivel."
 }</code></pre>
-        </section>
 
-        <section id="fluxo" class="doc-section">
-          <div class="section-kicker">12</div>
-          <h2>Fluxo geral</h2>
-          <div class="diagram">
-            <div class="diagram-node primary">WEBHOOK PAGAMENTO</div>
-            <div class="diagram-arrow">↓</div>
-            <div class="diagram-node">VERIFICA API KEY</div>
-            <div class="diagram-arrow">↓</div>
-            <div class="diagram-node">VERIFICA X-PEDIDO-ID</div>
-            <div class="diagram-arrow">↓</div>
-            <div class="diagram-node">CONSULTA REDIS</div>
-            <div class="diagram-arrow">↓</div>
-            <div class="diagram-node decision">JÁ FOI APROVADO?</div>
-            <div class="diagram-branches">
-              <div class="branch"><span class="branch-label">SIM</span><div class="diagram-node success">PAGAMENTO JÁ PROCESSADO → RESPONSE</div></div>
-              <div class="branch"><span class="branch-label">NÃO</span><div class="diagram-node decision">VERIFICA SALDO</div></div>
-            </div>
-            <div class="diagram-branches">
-              <div class="branch"><span class="branch-label">INSUFICIENTE</span><div class="diagram-node danger">RECUSADO → REDIS → LOGGER → RESPONSE</div></div>
-              <div class="branch"><span class="branch-label">SUFICIENTE</span><div class="diagram-node success">PENDENTE → APROVADO → REDIS → LOGGER</div></div>
-            </div>
-            <div class="diagram-arrow">↓</div>
-            <div class="diagram-node">ORQUESTRADOR A</div>
-            <div class="diagram-arrow">falha ↓</div>
-            <div class="diagram-node">ORQUESTRADOR B</div>
-            <div class="diagram-arrow">falha ↓</div>
-            <div class="diagram-node danger">503</div>
-          </div>
-          <p>O Health Check e o endpoint usado pela integração com o Chaos Monkey são entradas independentes.</p>
-        </section>
-
-        <section id="codigos" class="doc-section">
-          <div class="section-kicker">13</div>
-          <h2>Códigos de resposta</h2>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Código</th><th>Descrição</th></tr></thead>
-              <tbody>
-                <tr><td><span class="http-code ok">200</span></td><td>Pagamento concluído, recusado por regra de negócio ou já processado anteriormente.</td></tr>
-                <tr><td><span class="http-code warn">400</span></td><td>Dados obrigatórios ausentes ou inválidos.</td></tr>
-                <tr><td><span class="http-code warn">401</span></td><td>API Key ausente ou inválida.</td></tr>
-                <tr><td><span class="http-code err">503</span></td><td>Redis indisponível no Health Check ou falha das integrações após o fallback.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="integracao" class="doc-section">
-          <div class="section-kicker">14</div>
-          <h2>Integração com os outros serviços</h2>
-          <p>O Pagamento faz parte do fluxo maior do PZaaS. O pedido passa pelo Gateway e pelo Orquestrador, que coordena as dependências do checkout. O serviço de Pagamento recebe os dados necessários para decidir a operação e devolve o resultado.</p>
-          <div class="integration-line">
-            <span>Cliente</span><b>→</b><span>API Gateway</span><b>→</b><span>Orquestrador</span><b>→</b><span class="active">Pagamento</span>
-          </div>
-          <p>O Cadastro/Identidade participa da arquitetura validando token e perfil, mas não foi colocado como uma chamada direta do Pagamento.</p>
-        </section>
-
-        <section id="estado" class="doc-section">
-          <div class="section-kicker">15</div>
-          <h2>Estado atual da implementação</h2>
-          <p>O fluxo principal já possui validação de headers, consulta ao Redis, idempotência para pedidos aprovados, verificação de saldo, aprovação, recusa por saldo insuficiente, Health Check, envio de logs e tratamento de fallback nas integrações configuradas.</p>
-          <p>A integração com o Chaos Monkey está separada do workflow principal e serve apenas para os testes controlados com a dupla responsável pelo Serviço 10.</p>
-          <div class="callout warning"><strong>Antes da entrega final:</strong> ainda é necessário confirmar as URLs definitivas dos outros serviços e validar o contrato final de comunicação com o Orquestrador.</div>
-        </section>
-
-        <footer class="footer">
-          <div><strong>PZaaS</strong> · Serviço de Pagamento (04)</div>
-          <div>Documentação v1 · turmaa21</div>
-        </footer>
+      <h3>Desativar a falha</h3>
+      <p>Para normalizar o serviço, enviamos outro valor, como:</p>
+      <pre><code>{
+  "tipo_falha": 0
+}</code></pre>
+      <p>Como não é 503, o outro caminho do IF executa:</p>
+      <pre><code>DELETE chaos:pagamento</code></pre>
+      <p>A chave é removida e as próximas chamadas de pagamento voltam a seguir o fluxo normal.</p>
+      <div class="teste">
+        <strong>Teste que usamos no Postman:</strong>
+        <span>503 → ativa o Chaos → pagamento fica indisponível</span>
+        <span>0 → remove a chave → pagamento volta ao normal</span>
       </div>
-    </main>
-  </div>
-  <div class="overlay" id="overlay"></div>
-  <script src="./script.js"></script>
+    </section>
+
+    <section id="fluxo" class="bloco">
+      <h2>9. Fluxo geral atual</h2>
+      <div class="diagrama">
+        <div>WEBHOOK PAGAMENTO</div>
+        <i>↓</i>
+        <div>VERIFICA CHAOS NO REDIS</div>
+        <i>↓</i>
+        <div class="decisao">CHAOS = 503?</div>
+        <div class="ramo"><span>SIM → retorna indisponível</span><span>NÃO → continua</span></div>
+        <i>↓</i>
+        <div>VALIDA API KEY</div>
+        <i>↓</i>
+        <div>VALIDA X-PEDIDO-ID</div>
+        <i>↓</i>
+        <div>CONSULTA PEDIDO NO REDIS</div>
+        <i>↓</i>
+        <div>VERIFICA SE JÁ FOI APROVADO</div>
+        <i>↓</i>
+        <div>VERIFICA SALDO</div>
+        <i>↓</i>
+        <div>APROVA OU RECUSA</div>
+        <i>↓</i>
+        <div>REDIS + LOGGER</div>
+        <i>↓</i>
+        <div>ORQUESTRADOR A → FALLBACK B</div>
+      </div>
+    </section>
+
+    <section class="bloco">
+      <h2>10. Códigos principais</h2>
+      <table>
+        <thead><tr><th>Código</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>200</td><td>Pagamento concluído, recusado por regra de negócio ou pedido já processado.</td></tr>
+          <tr><td>400</td><td>x-pedido-id ausente ou dados inválidos.</td></tr>
+          <tr><td>401</td><td>API Key inválida.</td></tr>
+          <tr><td>503</td><td>Serviço indisponível por Chaos Monkey, Redis ou falha das integrações.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="bloco final">
+      <h2>Estado atual</h2>
+      <p>O workflow está ativo e possui processamento de pagamento, validações, idempotência com Redis, controle de saldo, Logger, Health Check, comunicação com Orquestrador A/B e o Chaos Monkey integrado ao começo do fluxo principal.</p>
+      <p class="assinatura">Projeto desenvolvido pela dupla · RA 243199 e RA 240080</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">PZaaS · Serviço 04 · Pagamento · 243199 / 240080</div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
