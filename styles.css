@@ -33,3 +33,19 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;
 @media(max-width:760px){.topo{padding:36px 0 30px}.topo-grid{grid-template-columns:1fr}.alunos{width:100%}h1{font-size:35px}.sub{font-size:16px}.cards{grid-template-columns:1fr 1fr}.duas-colunas{grid-template-columns:1fr}.bloco{padding:22px}.wrap{width:min(100% - 22px,1050px)}}
 @media(max-width:480px){.cards{grid-template-columns:1fr}.menu-links{padding-left:2px}.diagrama .ramo{grid-template-columns:1fr}}
 @media print{.menu{display:none}.topo{padding:25px 0}.bloco{break-inside:avoid;box-shadow:none}.conteudo{padding-top:15px}body{background:white}}
+
+.endpoint-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.endpoint-link:hover {
+  opacity: 0.75;
+}

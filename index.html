@@ -54,9 +54,25 @@
 
     <section id="endpoints" class="bloco">
       <h2>2. Endpoints</h2>
-      <div class="endpoint"><span class="post">POST</span><code>/v1/turmaa21_Pagamento/fluxo</code><p>Recebe e processa o pagamento.</p></div>
-      <div class="endpoint"><span class="get">GET</span><code>/v1/turmaa21/health</code><p>Verifica o serviço e a conexão com o Redis.</p></div>
-      <div class="endpoint"><span class="post">POST</span><code>/v1/turmaa21_pagamento/chaos_monkey</code><p>Ativa ou desativa a falha controlada do serviço de Pagamento.</p></div>
+      <p>Esses são os endpoints públicos usados para testar o nosso serviço:</p>
+
+      <div class="endpoint">
+        <span class="post">POST</span>
+        <a class="endpoint-link" href="https://pzaas.online/webhook/v1/turmaa21_Pagamento/fluxo" target="_blank" rel="noopener noreferrer">https://pzaas.online/webhook/v1/turmaa21_Pagamento/fluxo</a>
+        <p>Recebe e processa o pagamento.</p>
+      </div>
+
+      <div class="endpoint">
+        <span class="get">GET</span>
+        <a class="endpoint-link" href="https://pzaas.online/webhook/v1/turmaa21/health" target="_blank" rel="noopener noreferrer">https://pzaas.online/webhook/v1/turmaa21/health</a>
+        <p>Verifica o serviço e a conexão com o Redis.</p>
+      </div>
+
+      <div class="endpoint">
+        <span class="post">POST</span>
+        <a class="endpoint-link" href="https://pzaas.online/webhook/v1/turmaa21_pagamento/chaos_monkey" target="_blank" rel="noopener noreferrer">https://pzaas.online/webhook/v1/turmaa21_pagamento/chaos_monkey</a>
+        <p>Ativa ou desativa a falha controlada do serviço de Pagamento.</p>
+      </div>
     </section>
 
     <section id="pagamento" class="bloco">
