@@ -80,8 +80,14 @@
       <h3>Entrada</h3>
       <p>O fluxo principal recebe uma requisição POST com os dados abaixo:</p>
       <pre><code>{
-  "pedido_id": "8030",
-  "cliente": "Joao",
+  "pedido_id": "ped-0337",
+  "cliente_id": "cli-0001",
+  "itens": [
+    {
+      "pizza_id": "calabresa",
+      "qtd": 1
+    }
+  ],
   "valor": 79.90,
   "saldo_cliente": 100.00
 }</code></pre>
@@ -89,7 +95,15 @@
       <h3>Headers usados</h3>
       <pre><code>Content-Type: application/json
 x-api-key: turma2026
-x-pedido-id: 8030</code></pre>
+x-pedido-id: ped-0337</code></pre>
+
+      <h3>Contrato atual do pedido</h3>
+      <p>O pagamento trabalha com o identificador do pedido, o <code>cliente_id</code>, a lista de itens solicitados, o valor total e o saldo informado. O nome do cliente não é necessário neste serviço.</p>
+      <pre><code>pedido_id   → identifica o pedido
+cliente_id  → identifica o cliente
+itens       → pizzas e quantidades solicitadas
+valor       → total da compra
+saldo_cliente → saldo usado na validação do pagamento</code></pre>
 
       <h3>Validações</h3>
       <p>Primeiro o serviço consulta o estado do Chaos Monkey. Se o serviço não estiver em falha, ele continua para a validação da API Key e depois verifica se o <code>x-pedido-id</code> foi enviado.</p>
@@ -103,7 +117,7 @@ x-pedido-id: 8030</code></pre>
         <div>
           <h3>Exemplo aprovado</h3>
           <pre><code>{
-  "pedido_id": "8030",
+  "pedido_id": "ped-0337",
   "status": "APROVADO",
   "gateway_utilizado": "PRINCIPAL",
   "motivo": null
@@ -112,7 +126,7 @@ x-pedido-id: 8030</code></pre>
         <div>
           <h3>Exemplo recusado</h3>
           <pre><code>{
-  "pedido_id": "8031",
+  "pedido_id": "ped-0338",
   "status": "RECUSADO",
   "motivo": "SALDO_INSUFICIENTE",
   "gateway_utilizado": "NENHUM"
@@ -126,7 +140,7 @@ x-pedido-id: 8030</code></pre>
       <p>O Redis é usado em duas partes importantes do projeto: para salvar o estado do pagamento e para controlar a falha do Chaos Monkey.</p>
       <h3>Estado do pedido</h3>
       <pre><code>pedido:8030</code></pre>
-      <p>Nessa chave ficam informações como cliente, valor, status e gateway utilizado.</p>
+      <p>Nessa chave ficam as informações do pagamento, como <code>cliente_id</code>, itens do pedido, valor, status e gateway utilizado.</p>
       <h3>Controle do Chaos</h3>
       <pre><code>chaos:pagamento = 503</code></pre>
       <p>Quando essa chave existe com valor <code>503</code>, o fluxo principal entende que o serviço está indisponível e retorna erro antes de processar o pagamento.</p>
@@ -138,7 +152,8 @@ x-pedido-id: 8030</code></pre>
       <p>A chamada de Logger está configurada com retry e para continuar o fluxo mesmo se houver erro nessa integração, evitando que uma falha no log impeça o pagamento de terminar.</p>
       <pre><code>{
   "servico": "pagamento",
-  "pedido_id": "8030",
+  "pedido_id": "ped-0337",
+  "cliente_id": "cli-0001",
   "status": "APROVADO",
   "gateway_utilizado": "PRINCIPAL",
   "motivo": null
@@ -151,6 +166,23 @@ x-pedido-id: 8030</code></pre>
       <div class="fluxo-curto">
         <span>Pagamento aprovado</span><b>→</b><span>Logger</span><b>→</b><span>Orquestrador A</span><b>→</b><span>Fallback B</span>
       </div>
+      <h3>Payload enviado ao Orquestrador</h3>
+      <p>O resultado aprovado é repassado mantendo o <code>cliente_id</code> e os itens recebidos no pedido.</p>
+      <pre><code>{
+  "pedido_id": "ped-0337",
+  "cliente_id": "cli-0001",
+  "itens": [
+    {
+      "pizza_id": "calabresa",
+      "qtd": 1
+    }
+  ],
+  "valor": 79.90,
+  "status_pagamento": "APROVADO",
+  "gateway_utilizado": "PRINCIPAL",
+  "motivo": null,
+  "servico_origem": "pagamento"
+}</code></pre>
       <p>Se os dois estiverem indisponíveis, o serviço devolve um erro de indisponibilidade relacionado ao Orquestrador.</p>
       <pre><code>{
   "erro": "SERVICO_INDISPONIVEL",
@@ -230,6 +262,8 @@ x-pedido-id: 8030</code></pre>
         <i>↓</i>
         <div>CONSULTA PEDIDO NO REDIS</div>
         <i>↓</i>
+        <div>MANTÉM CLIENTE_ID + ITENS DO PEDIDO</div>
+        <i>↓</i>
         <div>VERIFICA SE JÁ FOI APROVADO</div>
         <i>↓</i>
         <div>VERIFICA SALDO</div>
@@ -257,7 +291,7 @@ x-pedido-id: 8030</code></pre>
 
     <section class="bloco final">
       <h2>Estado atual</h2>
-      <p>O workflow está ativo e possui processamento de pagamento, validações, idempotência com Redis, controle de saldo, Logger, Health Check, comunicação com Orquestrador A/B e o Chaos Monkey integrado ao começo do fluxo principal.</p>
+      <p>O workflow está ativo e possui processamento de pagamento, validações, idempotência com Redis, controle de saldo, Logger, Health Check, comunicação com Orquestrador A/B e o Chaos Monkey integrado ao começo do fluxo principal. O contrato atual usa <code>pedido_id</code>, <code>cliente_id</code> e <code>itens</code>, mantendo esses dados no processamento e no envio ao Orquestrador.</p>
       <p class="assinatura">Projeto desenvolvido pela dupla · RA 243199 e RA 240080</p>
     </section>
   </main>
